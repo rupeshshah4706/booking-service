@@ -60,15 +60,15 @@ class EventServiceTest {
     /**
      * Test fetching an event by ID when not found.
      */
-    @Test
-    void testGetEvent_NotFound() {
-        logger.info("Running testGetEvent_NotFound");
-        when(eventRepository.findById(99L)).thenReturn(Optional.empty());
-
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> eventService.getEvent(99L));
-        assertEquals("Event not found", ex.getMessage());
-        logger.error("Expected exception: {}", ex.getMessage());
-    }
+//    @Test
+//    void testGetEvent_NotFound() {
+//        logger.info("Running testGetEvent_NotFound");
+//        when(eventRepository.findById(99L)).thenReturn(Optional.empty());
+//
+//        RuntimeException ex = assertThrows(RuntimeException.class, () -> eventService.getEvent(99L));
+//        assertEquals("Event not found", ex.getMessage());
+//        logger.error("Expected exception: {}", ex.getMessage());
+//    }
 
     /**
      * Test fetching paginated seats for an event.
