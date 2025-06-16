@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
@@ -40,6 +41,8 @@ class BookingServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        // Manually inject the topic value for tests
+        ReflectionTestUtils.setField(bookingService, "topic", "booking-events");
         logger.info("Mocks initialized for BookingServiceTest");
     }
 

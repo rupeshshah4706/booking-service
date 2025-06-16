@@ -9,6 +9,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
@@ -22,7 +23,11 @@ public class BookingService {
 
     private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
 
-    public static final String TOPIC = "booking-events";
+    public static final String BOOKED = "BOOKED";
+    public static final String CANCELLED = "CANCELLED";
+
+    @Value("${booking.kafka.topic}")
+    private String topic;
 
     @Autowired
     private SeatRepository seatRepository;
@@ -74,7 +79,7 @@ public class BookingService {
                 throw new RuntimeException("Seat already booked");
             }
 
-            if (bookingRepository.findByEventIdAndSeatIdAndStatus(seat.getEvent().getId(), seat.getId(), "BOOKED").isPresent()) {
+            if (bookingRepository.findByEventIdAndSeatIdAndStatus(seat.getEvent().getId(), seat.getId(), BOOKED).isPresent()) {
                 logger.warn("Booking already exists for seat: seatId={}, eventId={}", seat.getId(), event.getId());
                 throw new RuntimeException("Booking already exists for this seat");
             }
@@ -87,14 +92,15 @@ public class BookingService {
             booking.setUserId(request.getUserId());
             booking.setEventId(request.getEventId());
             booking.setSeatId(seat.getId());
-            booking.setStatus("BOOKED");
+            booking.setStatus(BOOKED);
             booking.setBookedAt(java.time.LocalDateTime.now());
             Booking savedBooking = bookingRepository.save(booking);
             logger.info("Booking created: bookingId={}", savedBooking.getId());
 
             String message = String.format("{\"type\":\"BOOKED\",\"bookingId\":%d,\"userId\":%d,\"eventId\":%d,\"seatNumber\":\"%s\"}",
                     savedBooking.getId(), savedBooking.getUserId(), event.getId(), seat.getSeatNumber());
-            kafkaTemplate.send(TOPIC, message);
+            kafkaTemplate.send(topic, message);
+
             logger.debug("Booking event sent to Kafka: {}", message);
 
             messagingTemplate.convertAndSend(
@@ -124,13 +130,13 @@ public class BookingService {
     public void cancelBooking(Long bookingId) {
         logger.info("Attempting to cancel booking: bookingId={}", bookingId);
         try {
-            Booking booking = bookingRepository.findByIdAndStatus(bookingId, "BOOKED")
+            Booking booking = bookingRepository.findByIdAndStatus(bookingId, BOOKED)
                     .orElseThrow(() -> {
                         logger.error("Active booking not found: bookingId={}", bookingId);
                         return new RuntimeException("Active booking not found");
                     });
 
-            booking.setStatus("CANCELLED");
+            booking.setStatus(CANCELLED);
             bookingRepository.save(booking);
             logger.info("Booking marked as cancelled: bookingId={}", booking.getId());
 
@@ -145,7 +151,7 @@ public class BookingService {
 
             String message = String.format("{\"type\":\"CANCELLED\",\"bookingId\":%d,\"userId\":%d,\"eventId\":%d,\"seatNumber\":\"%s\"}",
                     booking.getId(), booking.getUserId(), booking.getEventId(), seat.getSeatNumber());
-            kafkaTemplate.send(TOPIC, message);
+            kafkaTemplate.send(topic, message);
             logger.debug("Cancellation event sent to Kafka: {}", message);
 
             messagingTemplate.convertAndSend(

@@ -180,8 +180,11 @@ public class EventService {
     public void deleteEvent(Long id) {
         logger.info("Deleting event: id={}", id);
         try {
-            eventRepository.deleteById(id);
-            logger.debug("Event deleted: id={}", id);
+                // Delete seats first
+                seatRepository.deleteAll(seatRepository.findByEventId(id, Pageable.unpaged()));
+                // Then delete event
+                eventRepository.deleteById(id);
+                logger.debug("Event and its seats deleted: id={}", id);
         } catch (Exception ex) {
             logger.error("Error deleting event: {}", ex.getMessage(), ex);
             throw new RuntimeException("Error deleting event", ex);

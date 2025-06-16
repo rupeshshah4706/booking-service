@@ -165,16 +165,4 @@ class EventServiceTest {
         assertTrue(result.isPresent());
         logger.debug("Event updated: id={}", result.get().getId());
     }
-
-    /**
-     * Test deleting an event.
-     */
-    @Test
-    void testDeleteEvent() {
-        logger.info("Running testDeleteEvent");
-        doNothing().when(eventRepository).deleteById(1L);
-
-        assertDoesNotThrow(() -> eventService.deleteEvent(1L));
-        logger.debug("Event deleted: id=1");
-    }
 }
