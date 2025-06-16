@@ -33,4 +33,5 @@ build/
 .vscode/
 
 # Ignore all log files
-*.log
+logs/app.log
+logs/app*.log
